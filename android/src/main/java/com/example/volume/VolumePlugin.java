@@ -33,11 +33,17 @@ public class VolumePlugin extends ContentObserver implements MethodCallHandler {
      * Plugin registration.
      */
     public static void registerWith(final Registrar registrar) {
+        if (registrar.activity() == null) {
+            return;
+        }
+
         final MethodChannel channel = new MethodChannel(registrar.messenger(), "volume");
         final VolumePlugin volumePlugin = new VolumePlugin(registrar.activity(), channel);
         channel.setMethodCallHandler(volumePlugin);
 
-        registrar.activity().getContentResolver()//
+
+        Context context = registrar.activeContext();
+        context.getContentResolver()//
                 .registerContentObserver(android.provider.Settings.System.CONTENT_URI,//
                         true, volumePlugin);
 
@@ -55,6 +61,8 @@ public class VolumePlugin extends ContentObserver implements MethodCallHandler {
         super(new Handler());
         this.activity = activity;
         this.channel = channel;
+
+        audioManager = (AudioManager) this.activity.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
     }
 
     @Override
@@ -77,26 +85,19 @@ public class VolumePlugin extends ContentObserver implements MethodCallHandler {
     }
 
     void controlVolume(int i) {
-        initAudioManager();
         this.activity.setVolumeControlStream(i);
     }
 
-    void initAudioManager() {
-        audioManager = (AudioManager) this.activity.getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-    }
 
     int getMaxVol() {
-        initAudioManager();
         return audioManager.getStreamMaxVolume(streamType);
     }
 
     int getVol() {
-        initAudioManager();
         return audioManager.getStreamVolume(streamType);
     }
 
     int setVol(int i) {
-        initAudioManager();
         audioManager.setStreamVolume(streamType, i, 0);
         return audioManager.getStreamVolume(streamType);
     }
