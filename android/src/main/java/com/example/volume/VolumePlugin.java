@@ -3,20 +3,26 @@ package com.example.volume;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.database.ContentObserver;
 import android.media.AudioManager;
+import android.os.Handler;
+import android.util.Log;
 
+import java.util.HashMap;
 import java.util.List;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
+import io.flutter.view.FlutterNativeView;
 
 /**
  * VolumePlugin
  */
-public class VolumePlugin implements MethodCallHandler {
+public class VolumePlugin extends ContentObserver implements MethodCallHandler {
 
     private final MethodChannel channel;
     private Activity activity;
@@ -26,12 +32,27 @@ public class VolumePlugin implements MethodCallHandler {
     /**
      * Plugin registration.
      */
-    public static void registerWith(Registrar registrar) {
+    public static void registerWith(final Registrar registrar) {
         final MethodChannel channel = new MethodChannel(registrar.messenger(), "volume");
-        channel.setMethodCallHandler(new VolumePlugin(registrar.activity(), channel));
+        final VolumePlugin volumePlugin = new VolumePlugin(registrar.activity(), channel);
+        channel.setMethodCallHandler(volumePlugin);
+
+        registrar.activity().getContentResolver()//
+                .registerContentObserver(android.provider.Settings.System.CONTENT_URI,//
+                        true, volumePlugin);
+
+        registrar.addViewDestroyListener(new PluginRegistry.ViewDestroyListener() {
+            @Override
+            public boolean onViewDestroy(FlutterNativeView v) {
+                registrar.activity().getContentResolver().unregisterContentObserver(volumePlugin);
+                return true;
+            }
+        });
+
     }
 
     private VolumePlugin(Activity activity, MethodChannel channel) {
+        super(new Handler());
         this.activity = activity;
         this.channel = channel;
     }
@@ -39,15 +60,12 @@ public class VolumePlugin implements MethodCallHandler {
     @Override
     public void onMethodCall(MethodCall call, Result result) {
         if (call.method.equals("controlVolume")) {
-            int i = call.argument("streamType");
-            streamType = i;
-            controlVolume(i);
+            streamType = call.argument("streamType");
+            controlVolume(streamType);
         } else if (call.method.equals("getMaxVol")) {
             result.success(getMaxVol());
-//            getMaxVol();
         } else if (call.method.equals("getVol")) {
             result.success(getVol());
-//            getVol();
         } else if (call.method.equals("setVol")) {
             int i = call.argument("newVol");
             setVol(i);
@@ -57,6 +75,7 @@ public class VolumePlugin implements MethodCallHandler {
     }
 
     void controlVolume(int i) {
+        initAudioManager();
         this.activity.setVolumeControlStream(i);
     }
 
@@ -76,7 +95,26 @@ public class VolumePlugin implements MethodCallHandler {
 
     int setVol(int i) {
         initAudioManager();
-        audioManager.setStreamVolume(streamType, i, AudioManager.FLAG_SHOW_UI);
+        audioManager.setStreamVolume(streamType, i, 0);
         return audioManager.getStreamVolume(streamType);
+    }
+
+    @Override
+    public boolean deliverSelfNotifications() {
+        return false;
+    }
+
+    @Override
+    public void onChange(boolean selfChange) {
+        final int currentVolume = audioManager.getStreamVolume(streamType);
+        final int maxVolume = audioManager.getStreamMaxVolume(streamType);
+        channel.invokeMethod("volumeChanged", new HashMap<String, Integer>() {
+            {
+                put("currentVolume", Integer.valueOf(currentVolume));
+                put("maxVolume", Integer.valueOf(maxVolume));
+            }
+        });
+
+        Log.d("VOLUME", "Volume now " + currentVolume);
     }
 }

@@ -13,7 +13,6 @@ class _MyAppState extends State<MyApp> {
   AudioManager audioManager;
   int maxVol, currentVol;
 
-  
   @override
   void initState() {
     super.initState();
@@ -23,6 +22,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
+    Volume.onVolumeStateChanged.listen((value){
+      updateVolumes();
+    });
     await Volume.controlVolume(AudioManager.STREAM_SYSTEM);
   }
 
@@ -35,7 +37,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   setVol(int i) async {
-    await Volume.setVol(i);
+//    await Volume.setVol(i);
+    Volume.setVol(i);
   }
 
   @override
@@ -97,22 +100,7 @@ class _MyAppState extends State<MyApp> {
                         updateVolumes();
                       },
                     )
-                  : Container(),
-
-              FlatButton(
-                child: Text("Vol Up"),
-                onPressed: (){
-                  Volume.volUp();
-                  updateVolumes();
-                },
-              ),
-              FlatButton(
-                child: Text("Vol Down"),
-                onPressed: (){
-                  Volume.volDown();
-                  updateVolumes();
-                },
-              )
+                  : Container()
             ],
           ),
         ),

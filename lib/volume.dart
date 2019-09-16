@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:system_shortcuts/system_shortcuts.dart';
 
 /// AudioManager Streams control the type of volume the getVol and setVol fucntion will control.
 enum AudioManager {
@@ -23,17 +22,39 @@ enum AudioManager {
   STREAM_NOTIFICATION,
 }
 
+class VolumeChangeEvent {
+  int volume;
+  int maxVolume;
+
+  VolumeChangeEvent(this.volume, this.maxVolume);
+}
+
 /// You can control VoiceCall, System, Ringer, Media, Alarm, Notification
 /// volume and get the max possible volumes for the respective.
-/// 
+///
 /// Call the controlVolume ( AudioManager ) function in initState ()
-/// 
+///
 /// to to make sure the setVol ( int ) , getMaxVol, and getVol control
-/// 
-/// the volume passed as the parameter to the controlVolume ( AudioManager ) 
+///
+/// the volume passed as the parameter to the controlVolume ( AudioManager )
 /// function.
 class Volume {
-  static const MethodChannel _channel = const MethodChannel('volume');
+  static final StreamController<VolumeChangeEvent> _volumeStateController =
+      new StreamController.broadcast();
+
+  static MethodChannel _channel = const MethodChannel('volume')
+    ..setMethodCallHandler((MethodCall call) async {
+      switch (call.method) {
+        case 'volumeChanged':
+          var args = call.arguments;
+          Volume._volumeStateController
+              .add(new VolumeChangeEvent(args['currentVolume'], args['maxVolume']));
+          break;
+      }
+    });
+
+  static Stream<VolumeChangeEvent> get onVolumeStateChanged =>
+      _volumeStateController.stream;
 
   /// Pass any AudioManager Stream as a paremeter to this fucntion and the
   /// volume buttons and setVol ( int ) function will control that particular volume.
@@ -85,26 +106,6 @@ class Volume {
     });
     int vol = await _channel.invokeMethod('setVol', map);
     return vol;
-  }
-
-  /// Press VolumeUp button programatically.
-  /// It returns a null.
-  /// 
-  /// Implementaion :- 
-  /// 
-  /// Volume.volUp()
-  static Future<Null> volUp() async{
-    await SystemShortcuts.volUp();
-  }
-
-  /// Press VolumeDown button programatically.
-  /// It returns a null.
-  /// 
-  /// Implementaion :- 
-  /// 
-  /// Volume.volDown()
-  static Future<Null> volDown() async{
-    await SystemShortcuts.volDown();
   }
 }
 
