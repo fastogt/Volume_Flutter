@@ -62,6 +62,7 @@ public class VolumePlugin extends ContentObserver implements MethodCallHandler {
         if (call.method.equals("controlVolume")) {
             streamType = call.argument("streamType");
             controlVolume(streamType);
+            result.success(null);
         } else if (call.method.equals("getMaxVol")) {
             result.success(getMaxVol());
         } else if (call.method.equals("getVol")) {
@@ -69,6 +70,7 @@ public class VolumePlugin extends ContentObserver implements MethodCallHandler {
         } else if (call.method.equals("setVol")) {
             int i = call.argument("newVol");
             setVol(i);
+            result.success(null);
         } else {
             result.notImplemented();
         }
