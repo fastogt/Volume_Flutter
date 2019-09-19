@@ -17,5 +17,11 @@ A new flutter plugin project.
   s.dependency 'Flutter'
 
   s.ios.deployment_target = '8.0'
+
+  s.test_spec 'Tests' do |test_spec|
+    test_spec.preserve_path = "${POD_ROOT}/Tests/BridgingHeader.h"
+    test_spec.xcconfig = { 'SWIFT_OBJC_BRIDGING_HEADER' => '${POD_ROOT}/volume/Bridging-Header.h' }
+    test_spec.source_files = 'Tests/**/*.{h,m,swift}'
+  end
 end
 

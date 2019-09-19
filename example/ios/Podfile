@@ -59,7 +59,7 @@ target 'Runner' do
   plugin_pods.map { |p|
     symlink = File.join('.symlinks', 'plugins', p[:name])
     File.symlink(p[:path], symlink)
-    pod p[:name], :path => File.join(symlink, 'ios')
+    pod p[:name], :path => File.join(symlink, 'ios'), :testspecs => ['Tests']
   }
 end
 

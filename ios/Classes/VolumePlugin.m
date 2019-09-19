@@ -1,25 +1,30 @@
 #import "VolumePlugin.h"
 #import "RDVolumeChanger.h"
 
-@interface VolumePlugin ()
+@interface VolumePlugin () <RDVolumeChangerDelegate>
 {
     RDVolumeChanger *_volumeChanger;
 }
+@property (nonatomic, strong) FlutterMethodChannel *channel;
 @end
 
 @implementation VolumePlugin
+
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
-  FlutterMethodChannel* channel = [FlutterMethodChannel
-      methodChannelWithName:@"volume"
-            binaryMessenger:[registrar messenger]];
-  VolumePlugin* instance = [[VolumePlugin alloc] init];
-  [registrar addMethodCallDelegate:instance channel:channel];
+    FlutterMethodChannel* channel = [FlutterMethodChannel
+                                     methodChannelWithName:@"volume"
+                                     binaryMessenger:[registrar messenger]];
+    
+    VolumePlugin* instance = [[VolumePlugin alloc] init];
+    [registrar addMethodCallDelegate:instance channel:channel];
+    [instance setChannel:channel];
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
     
     if ([call.method isEqualToString:@"controlVolume"]) {
         _volumeChanger = [[RDVolumeChanger alloc] init];
+        [_volumeChanger setDelegate:self];
         result(nil);
     }
     else if ([call.method isEqualToString:@"getMaxVol"]) {
@@ -38,7 +43,11 @@
     } else {
         result(FlutterMethodNotImplemented);
     }
+}
 
+- (void)volumeChanged:(float)volumeLevel {
+    [self.channel invokeMethod:@"volumeChanged"
+                     arguments:@{@"currentVolume" : @((int)([_volumeChanger volume] * 100)), @"maxVolume" : @(100)}];
 }
 
 @end
