@@ -29,6 +29,8 @@ public class VolumePlugin extends ContentObserver implements MethodCallHandler {
     AudioManager audioManager;
     private int streamType;
 
+    private volatile  boolean draggable = false;
+
     /**
      * Plugin registration.
      */
@@ -98,6 +100,7 @@ public class VolumePlugin extends ContentObserver implements MethodCallHandler {
     }
 
     int setVol(int i) {
+        draggable = true;
         audioManager.setStreamVolume(streamType, i, 0);
         return audioManager.getStreamVolume(streamType);
     }
@@ -109,6 +112,10 @@ public class VolumePlugin extends ContentObserver implements MethodCallHandler {
 
     @Override
     public void onChange(boolean selfChange) {
+        if (draggable){
+            this.draggable = false;
+            return;
+        }
         final int currentVolume = audioManager.getStreamVolume(streamType);
         final int maxVolume = audioManager.getStreamMaxVolume(streamType);
         channel.invokeMethod("volumeChanged", new HashMap<String, Integer>() {
