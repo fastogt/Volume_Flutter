@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setVolume:(float)value;
 - (float)volume;
+- (float)maxVolume;
 
 @end
 

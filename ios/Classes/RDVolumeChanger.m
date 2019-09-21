@@ -36,7 +36,12 @@
 
 - (void)setVolume:(float)value
 {
-    [[self _volumeSlider] setValue:value animated:NO];
+    [[self _volumeSlider] setValue:value];
+}
+
+- (float)maxVolume
+{
+    return [[self _volumeSlider] maximumValue];
 }
 
 - (float)volume

@@ -6,3 +6,4 @@ export "FLUTTER_TARGET=/Users/abuharsky/Documents/Android/Volume_Flutter/example
 export "FLUTTER_BUILD_DIR=build"
 export "SYMROOT=${SOURCE_ROOT}/../build/ios"
 export "FLUTTER_FRAMEWORK_DIR=/Users/abuharsky/Documents/Flutter/flutter/bin/cache/artifacts/engine/ios"
+export "TRACK_WIDGET_CREATION=true"

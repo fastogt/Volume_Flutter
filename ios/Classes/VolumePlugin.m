@@ -4,6 +4,7 @@
 @interface VolumePlugin () <RDVolumeChangerDelegate>
 {
     RDVolumeChanger *_volumeChanger;
+    NSMutableArray *_ignoredVolumeLevels;
 }
 @property (nonatomic, strong) FlutterMethodChannel *channel;
 @end
@@ -20,34 +21,56 @@
     [instance setChannel:channel];
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _volumeChanger = [[RDVolumeChanger alloc] init];
+        [_volumeChanger setDelegate:self];
+        
+        _ignoredVolumeLevels = [NSMutableArray new];
+    }
+    return self;
+}
+
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
     
     if ([call.method isEqualToString:@"controlVolume"]) {
-        _volumeChanger = [[RDVolumeChanger alloc] init];
-        [_volumeChanger setDelegate:self];
         result(nil);
     }
     else if ([call.method isEqualToString:@"getMaxVol"]) {
-        result(@(100));
+        result(@((int)(_volumeChanger.maxVolume * 100)));
     }
     else if ([call.method isEqualToString:@"getVol"]) {
-        NSNumber *vol = @((int)([_volumeChanger volume] * 100));
+        NSNumber *vol = @((int)(_volumeChanger.volume * 100));
         result(vol);
     }
     else if ([call.method isEqualToString:@"setVol"]) {
         NSDictionary *args = call.arguments;
-        float volume = [args[@"newVol"] floatValue];
         
-        [_volumeChanger setVolume:volume / 100.0];
-        result(@(volume));
+        float volume = [args[@"newVol"] floatValue] / 100.0;
+        
+        [_ignoredVolumeLevels addObject:@(volume)];
+        [NSObject cancelPreviousPerformRequestsWithTarget:_ignoredVolumeLevels];
+        [_ignoredVolumeLevels performSelector:@selector(removeAllObjects) withObject:nil afterDelay:1.0];
+        
+        [_volumeChanger setVolume:volume];
+        
+        result(@((int)(volume * 100.0)));
     } else {
         result(FlutterMethodNotImplemented);
     }
 }
 
 - (void)volumeChanged:(float)volumeLevel {
+    
+    if ([_ignoredVolumeLevels containsObject:@(volumeLevel)]) {
+        [_ignoredVolumeLevels removeObject:@(volumeLevel)];
+        return;
+    }
+
     [self.channel invokeMethod:@"volumeChanged"
-                     arguments:@{@"currentVolume" : @((int)([_volumeChanger volume] * 100)), @"maxVolume" : @(100)}];
+                     arguments:@{@"currentVolume" : @((int)(_volumeChanger.volume * 100)),
+                                 @"maxVolume" : @((int)(_volumeChanger.maxVolume * 100))}];
 }
 
 @end
