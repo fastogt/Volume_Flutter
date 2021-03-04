@@ -23,8 +23,8 @@ enum AudioManager {
 }
 
 class VolumeChangeEvent {
-  int volume;
-  int maxVolume;
+  int? volume;
+  int? maxVolume;
 
   VolumeChangeEvent(this.volume, this.maxVolume);
 }
@@ -53,13 +53,12 @@ class Volume {
       }
     });
 
-  static Stream<VolumeChangeEvent> get onVolumeStateChanged =>
-      _volumeStateController.stream;
+  static Stream<VolumeChangeEvent> get onVolumeStateChanged => _volumeStateController.stream;
 
   /// Pass any AudioManager Stream as a paremeter to this fucntion and the
   /// volume buttons and setVol ( int ) function will control that particular volume.
   static Future<Null> controlVolume(AudioManager audioManager) async {
-    Map<String, int> map = <String, int>{};
+    Map<String, int?> map = <String, int?>{};
     map.putIfAbsent("streamType", () {
       return _getInt(audioManager);
     });
@@ -74,8 +73,8 @@ class Volume {
   /// Can be implemented like this :-
   ///
   /// int maxVol = await Volume.getMaxVol;
-  static Future<int> get getMaxVol async {
-    int maxVol = await _channel.invokeMethod('getMaxVol');
+  static Future<int?> get getMaxVol async {
+    int? maxVol = await _channel.invokeMethod('getMaxVol');
     return maxVol;
   }
 
@@ -86,8 +85,8 @@ class Volume {
   /// Can be implemented like this :-
   ///
   /// int currentVol = await Volume.getVol;
-  static Future<int> get getVol async {
-    int vol = await _channel.invokeMethod('getVol');
+  static Future<int?> get getVol async {
+    int? vol = await _channel.invokeMethod('getVol');
     return vol;
   }
 
@@ -99,17 +98,17 @@ class Volume {
   /// await Volume.setVol ( int i );
   ///
   /// where value of 'i' is less then Volume.getMaxVol
-  static Future<int> setVol(int i) async {
+  static Future<int?> setVol(int i) async {
     Map<String, int> map = <String, int>{};
     map.putIfAbsent("newVol", () {
       return i;
     });
-    int vol = await _channel.invokeMethod('setVol', map);
+    int? vol = await _channel.invokeMethod('setVol', map);
     return vol;
   }
 }
 
-int _getInt(AudioManager audioManager) {
+int? _getInt(AudioManager audioManager) {
   switch (audioManager) {
     case AudioManager.STREAM_VOICE_CALL:
       return 0;
