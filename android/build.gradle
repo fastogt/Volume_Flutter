@@ -1,4 +1,4 @@
-group 'com.fastogt.volume'
+group 'com.example.volume'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -27,7 +27,7 @@ apply plugin: 'kotlin-android'
 android {
     compileSdk 34
 
-    namespace 'com.fastogt.volume'
+    namespace 'com.example.volume'
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
